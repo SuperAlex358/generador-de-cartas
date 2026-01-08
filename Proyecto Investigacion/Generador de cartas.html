@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Generador de Cartas Motivacionales</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+/* ===== FONDO WEB ===== */
+body{
+    margin:0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: url("cosmos.jpeg") no-repeat center center fixed;
+    background-size: cover;
+    color:#0a3d2c;
+}
+
+/* ===== CONTENEDOR ===== */
+.contenedor{
+    max-width: 850px;
+    margin: 40px auto;
+    background: rgba(255,255,255,0.94);
+    padding: 35px;
+    border-radius: 16px;
+    box-shadow: 0 20px 35px rgba(0,0,0,0.35);
+}
+
+/* ===== TITULO ===== */
+h1{
+    text-align:center;
+    color:#0a7f5a;
+    margin-bottom:10px;
+}
+
+.linea{
+    width:80px;
+    height:4px;
+    background:#1abc9c;
+    margin:10px auto 30px;
+    border-radius:10px;
+}
+
+/* ===== FORM ===== */
+label{
+    display:block;
+    margin-top:14px;
+    font-weight:600;
+    color:#0a5c44;
+}
+
+input, textarea, select{
+    width:100%;
+    padding:11px;
+    margin-top:6px;
+    border-radius:8px;
+    border:1px solid #bcded3;
+    font-size:15px;
+}
+
+textarea{
+    resize:none;
+}
+
+/* ===== BOTONES ===== */
+button{
+    width:100%;
+    padding:12px;
+    margin-top:18px;
+    border:none;
+    border-radius:30px;
+    background: linear-gradient(135deg,#0a7f5a,#1abc9c);
+    color:white;
+    font-size:16px;
+    font-weight:bold;
+    cursor:pointer;
+    transition:transform .2s, box-shadow .2s;
+}
+
+button:hover{
+    transform:translateY(-2px);
+    box-shadow:0 8px 18px rgba(0,0,0,0.25);
+}
+
+/* ===== CARTA ===== */
+.carta{
+    margin-top:40px;
+    padding:50px;
+    border-radius:14px;
+    position:relative;
+    border-left:10px solid #1abc9c;
+    overflow:hidden;
+    box-shadow:0 10px 20px rgba(0,0,0,0.15);
+}
+
+.carta::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:url("cosmos2.jpeg") no-repeat center;
+    background-size:cover;
+    opacity:0.15;
+}
+
+.contenido-carta{
+    position:relative;
+    z-index:1;
+    color:#04362b;
+    line-height:1.7;
+}
+
+.contenido-carta p{
+    margin-bottom:16px;
+}
+
+/* ===== PANEL ===== */
+.panel{
+    margin-top:35px;
+    border-top:1px solid #d6efe7;
+    padding-top:20px;
+}
+
+.panel h3{
+    color:#0a7f5a;
+}
+
+.panel li{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:8px 0;
+}
+
+.panel span{
+    cursor:pointer;
+    color:#0a7f5a;
+}
+
+.panel span:hover{
+    text-decoration:underline;
+}
+
+.panel button{
+    width:auto;
+    padding:6px 14px;
+    font-size:12px;
+    border-radius:20px;
+    background:#c0392b;
+}
+
+/* ===== PDF ===== */
+@media print{
+    body *{
+        visibility:hidden;
+    }
+
+    .carta, .carta *{
+        visibility:visible;
+    }
+
+    .carta{
+        position:absolute;
+        top:40px;
+        left:50%;
+        transform:translateX(-50%);
+        width:85%;
+        box-shadow:none;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="contenedor">
+<h1>Generador de Cartas Motivacionales</h1>
+<div class="linea"></div>
+
+<label>Nombre del empleado</label>
+<input type="text" id="nombre">
+
+<label>Puesto</label>
+<input type="text" id="puesto">
+
+<label>Motivo del reconocimiento</label>
+<textarea id="motivo" rows="3"></textarea>
+
+<label>Fecha</label>
+<input type="date" id="fecha">
+
+<label>Estilo de carta</label>
+<select id="estilo">
+    <option value="formal">Formal</option>
+    <option value="inspirador">Inspirador</option>
+    <option value="agradecimiento">Agradecimiento</option>
+</select>
+
+<button onclick="generarCarta()">Generar carta y descargar PDF</button>
+
+<p style="margin-top:15px"><strong>Cartas creadas:</strong> <span id="contador">0</span></p>
+
+<div class="carta">
+    <div class="contenido-carta" id="carta"></div>
+</div>
+
+<div class="panel">
+<h3>Cartas anteriores</h3>
+<ul id="panelCartas"></ul>
+</div>
+</div>
+
+<script>
+const frases=[
+"El compromiso constante construye resultados duraderos.",
+"La dedicación diaria refleja excelencia profesional.",
+"El esfuerzo bien dirigido siempre genera impacto positivo.",
+"El trabajo responsable fortalece a toda la organización.",
+"Su constancia representa un valor clave para el equipo."
+];
+
+const introducciones=[
+"Por medio de la presente, expresamos nuestro reconocimiento institucional.",
+"Nos dirigimos a usted para destacar su desempeño profesional.",
+"La presente carta tiene como objetivo reconocer su labor.",
+"Con gran aprecio, extendemos este reconocimiento formal."
+];
+
+const cierres=[
+"Reiteramos nuestro reconocimiento y agradecimiento.",
+"Confiamos en que continuará con el mismo compromiso.",
+"Reciba un cordial saludo y nuestro reconocimiento.",
+"Agradecemos sinceramente su valiosa contribución."
+];
+
+function aleatorio(lista){
+    return lista[Math.floor(Math.random()*lista.length)];
+}
+
+function generarCarta(){
+    const nombre=nombreInput.value;
+    const puesto=puestoInput.value;
+    const motivo=motivoInput.value;
+    const fecha=fechaInput.value||new Date().toISOString().split("T")[0];
+    const estilo=estiloInput.value;
+
+    if(!nombre||!puesto||!motivo){
+        alert("Completa todos los campos.");
+        return;
+    }
+
+    let enfoque={
+        formal:"Su desempeño se alinea con los valores institucionales.",
+        inspirador:"Su actitud positiva inspira al equipo.",
+        agradecimiento:"Agradecemos profundamente su esfuerzo."
+    }[estilo];
+
+    const contenido=`
+    <p><strong>${fecha}</strong></p>
+
+    <p><strong>Estimado/a ${nombre},</strong></p>
+
+    <p>${aleatorio(introducciones)}</p>
+
+    <p><em>${aleatorio(frases)}</em></p>
+
+    <p>
+    ${enfoque} Reconocemos su labor como <strong>${puesto}</strong>,
+    destacando especialmente <strong>${motivo}</strong>.
+    </p>
+
+    <p>${aleatorio(cierres)}</p>
+
+    <p><strong>Atentamente,</strong><br>Dirección General</p>
+    `;
+
+    carta.innerHTML=contenido;
+    guardarCarta(nombre,puesto,fecha,contenido);
+    document.title=`Carta_${nombre.replace(/\s+/g,"_")}_${fecha}`;
+
+    actualizarPanel();
+    actualizarContador();
+
+    setTimeout(()=>window.print(),500);
+}
+
+function guardarCarta(nombre,puesto,fecha,contenido){
+    let cartas=JSON.parse(localStorage.getItem("cartas"))||[];
+    cartas.push({nombre,puesto,fecha,contenido});
+    localStorage.setItem("cartas",JSON.stringify(cartas));
+}
+
+function actualizarPanel(){
+    panelCartas.innerHTML="";
+    let cartas=JSON.parse(localStorage.getItem("cartas"))||[];
+
+    cartas.forEach((c,i)=>{
+        let li=document.createElement("li");
+
+        let span=document.createElement("span");
+        span.textContent=`${c.fecha} - ${c.nombre} (${c.puesto})`;
+        span.onclick=()=>{
+            carta.innerHTML=c.contenido;
+            document.title=`Carta_${c.nombre}_${c.fecha}`;
+            setTimeout(()=>window.print(),500);
+        };
+
+        let btn=document.createElement("button");
+        btn.textContent="Eliminar";
+        btn.onclick=(e)=>{
+            e.stopPropagation();
+            cartas.splice(i,1);
+            localStorage.setItem("cartas",JSON.stringify(cartas));
+            actualizarPanel();
+            actualizarContador();
+        };
+
+        li.appendChild(span);
+        li.appendChild(btn);
+        panelCartas.appendChild(li);
+    });
+}
+
+function actualizarContador(){
+    contador.textContent=(JSON.parse(localStorage.getItem("cartas"))||[]).length;
+}
+
+window.onload=()=>{
+    actualizarPanel();
+    actualizarContador();
+};
+
+const nombreInput=document.getElementById("nombre");
+const puestoInput=document.getElementById("puesto");
+const motivoInput=document.getElementById("motivo");
+const fechaInput=document.getElementById("fecha");
+const estiloInput=document.getElementById("estilo");
+const carta=document.getElementById("carta");
+const panelCartas=document.getElementById("panelCartas");
+const contador=document.getElementById("contador");
+</script>
+
+</body>
+</html>
